@@ -1,0 +1,15 @@
+{
+  "name": "elbv2",
+  "version": "1.0.0",
+  "description": "* `ALB`を名前で検索し、ヘルスチェックが完了するまで待機する",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-fetch": "^2.3.0"
+  }
+}
