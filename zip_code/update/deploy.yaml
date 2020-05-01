@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: Lambda updates zip code master with S3 trigger
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Zipcode Integration"
+        Parameters:
+          - ServiceName
+          - InternalSecurityGroupId
+          - InternalSubnetIds
+          - UpdateZipCodeFuctionName
+
+Mappings:
+  DbHostMapping:
+    dev:
+      value: DATABASE_HOST_DEV
+    prod:
+      value: DATABASE_HOST
+  DbPasswordMapping:
+    dev:
+      value: DATABASE_PASSWORD_DEV
+    prod:
+      value: DATABASE_PASSWORD
+
+Parameters:
+  Env:
+    Description: "input your Profile."
+    Type: String
+    Default: "dev"
+    AllowedValues:
+      - dev
+      - prod
+
+  ServiceName:
+    Description: "input your ServiceName."
+    Type: String
+    Default: "sample-app"
+
+  InternalSecurityGroupId:
+    Description: "input your Security Group Name."
+    Type: CommaDelimitedList
+    Default: "sg-060007cd57b346a6f"
+
+  InternalSubnetIds:
+    Description: "input your Subnet Ids."
+    Type: CommaDelimitedList
+    Default: "subnet-0b62250e34fbd4d8e, subnet-060af51f8770d4e9f, subnet-00ce782ac9db427c8"
+
+  S3ZipcodeBucketName:
+    Description: "input your Download zipcode Lambda Fuction Name."
+    Type: String
+    Default: "sample-download-zipcode-file"
+
+Resources:
+  # ------------------------------------------------------------#
+  #  Lambda Role
+  # ------------------------------------------------------------#
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub ${ServiceName}-Update-ZipCode-FunctionRole-${Env}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+      Path: "/"
+
+  # ------------------------------------------------------------#
+  #  Lambda Function
+  # ------------------------------------------------------------#
+  UpdateZipCodeFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs12.x
+      FunctionName: !Sub ${ServiceName}-update-zipcode-${Env}
+      CodeUri: src/
+      Timeout: 900
+      MemorySize: 3008
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Tracing: Active
+      VpcConfig:
+        SecurityGroupIds: !Ref InternalSecurityGroupId
+        SubnetIds: !Ref InternalSubnetIds
+      Environment:
+        Variables:
+          ZIPCODE_BUCKET: !Ref S3ZipcodeBucketName
+          DATABASE_HOST: !FindInMap [DbHostMapping, !Ref Env, value]
+          DATABASE_PASSWORD: !FindInMap [DbPasswordMapping, !Ref Env, value]

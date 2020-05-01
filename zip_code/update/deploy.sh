@@ -1,0 +1,2 @@
+aws cloudformation package --template-file deploy.yaml --s3-bucket sample-artifact-bucket --s3-prefix sample-zip-update/$1 --output-template-file packaged-template.yml
+aws cloudformation deploy --template-file packaged-template.yml --stack-name sample-zip-update-for-$1 --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --parameter-overrides Env=$1

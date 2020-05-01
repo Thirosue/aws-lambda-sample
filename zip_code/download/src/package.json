@@ -1,0 +1,17 @@
+{
+  "name": "download_unzip_zip_code",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "mime-types": "^2.1.11",
+    "node-zip": "^1.1.1",
+    "zip": "^1.2.0"
+  }
+}

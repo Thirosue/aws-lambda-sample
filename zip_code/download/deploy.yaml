@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: Example of processing messages on an SQS queue with Lambda
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Zipcode Integration"
+        Parameters:
+          - ServiceName
+          - InternalSecurityGroupId
+          - InternalSubnetIds
+          - ZipcodeDownloadURL
+          - S3ZipcodeBucketName
+
+Parameters:
+  ServiceName:
+    Description: "input your ServiceName."
+    Type: String
+    Default: "sample-app"
+
+  ZipcodeDownloadURL:
+    Description: "input zipcode download url."
+    Type: String
+    Default: "http://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip"
+    
+  S3ZipcodeBucketName:
+    Description: "input your Download zipcode Lambda Fuction Name."
+    Type: String
+    Default: "sample-download-zipcode-file"
+
+Resources:
+  LambdaExecutionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub ${ServiceName}-Download-Zipcode-FunctionRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Path: "/"
+
+  # ------------------------------------------------------------#
+  #  Lambda Function
+  # ------------------------------------------------------------#
+  DownloadZipCodeFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs12.x
+      FunctionName: !Ref S3ZipcodeBucketName
+      CodeUri: src/
+      Timeout: 60
+      MemorySize: 256
+      Events:
+        CronEvent:
+          Type: Schedule
+          Properties: # AM 3:00 on the 1st of every month
+            Schedule: cron(0 18 1 * ? *)
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Tracing: Active
+      Environment:
+        Variables:
+          ZIPCODE_DL_URL: !Ref ZipcodeDownloadURL
+          ZIPCODE_BUCKET: !Ref S3ZipcodeBucketName

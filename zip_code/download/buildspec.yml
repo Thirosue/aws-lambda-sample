@@ -1,0 +1,16 @@
+
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 12
+  pre_build:
+    commands:
+      - cd src
+      - yarn
+      - cd ..
+  build:
+    commands:
+      - aws cloudformation package --template-file deploy.yaml --s3-bucket sample-artifact-bucket --s3-prefix sample-zip-download/prod --output-template-file packaged-template.yml
+      - aws cloudformation deploy --template-file packaged-template.yml --stack-name sample-zip-download-for-prod --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM

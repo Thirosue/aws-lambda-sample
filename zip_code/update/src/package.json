@@ -1,0 +1,11 @@
+{
+  "name": "sample-update-zipcode",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "csv-parse": "^4.9.0",
+    "iconv-lite": "^0.5.1",
+    "promise-mysql": "^4.1.3"
+  }
+}
