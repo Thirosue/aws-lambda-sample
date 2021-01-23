@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: An AWS Serverless Specification template describing your function.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Lambda Settings
+        Parameters:
+          - Env
+          - FunctionName
+          - BucketName
+          - Committer
+
+Parameters:
+  Env:
+    AllowedValues:
+      - dev
+      - prod
+    Default: prod
+    Description: input your Profile.
+    Type: String
+
+  FunctionName:
+    Default: GitHubPushSample
+    Description: input your FunctionName.
+    Type: String
+
+  BucketName:
+    Description: input your ServiceName.
+    Type: String
+
+  Committer:
+    Description: input your Committer.
+    Type: String
+
+Resources:
+  LambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      Path: /
+      RoleName:
+        Fn::Sub: ${FunctionName}Role-${Env}
+    Type: AWS::IAM::Role
+
+  LambdaFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      CodeUri: src/
+      FunctionName: !Sub ${FunctionName}-${Env}
+      Description: !Sub ${FunctionName}(${Env})
+      MemorySize: 256
+      Timeout: 60
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Events:
+        SyncScheduledEvent:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 20 * * ? *)
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref BucketName
+          ENVIRONMENT: !Ref Env
+          COMMITTER: !Ref Committer
