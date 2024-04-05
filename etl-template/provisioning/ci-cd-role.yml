@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CodePipeline for automatically deploying SAM application
+
+Parameters:
+  Env:
+    AllowedValues:
+      - dev
+      - stg
+      - prod
+    Default: dev
+    Description: input your Profile.
+    Type: String
+  ProjectName:
+    Type: String
+    Default: etl-template
+    Description: The name of the CodeBuild project
+
+Resources:
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-pipeline-${Env}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "codepipeline.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: CodePipelineAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "codebuild:*"
+                  - "s3:*"
+                  - "codecommit:*"
+                  - "cloudwatch:*"
+                Resource: "*"
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ProjectName}-build-${Env}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "codebuild.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: CodeBuildAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "s3:*"
+                  - "cloudwatch:*"
+                  - "logs:*"
+                  - "cloudformation:*"
+                  - "iam:*"
+                  - "lambda:*"
+                Resource: "*"
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  CodePipelineRoleArn:
+    Description: "Implicit IAM Role created for CodePipeline"
+    Value: !GetAtt CodePipelineRole.Arn
+  CodeBuildRoleArn:
+    Description: "Implicit IAM Role created for CodeBuild"
+    Value: !GetAtt CodeBuildRole.Arn

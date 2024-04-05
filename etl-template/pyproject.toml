@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "etltemplate"
+version = "0.1.0"
+description = ""
+authors = ["takeshi.hirosue <takeshi.hirosue@bigtreetc.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pandas = "^2.2.1"
+pydantic = "^2.6.4"
+boto3 = "^1.34.76"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.1.1"
+moto = {extras = ["s3"], version = "^5.0.4"}
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.7.0"
+black = "^24.3.0"
+isort = "^5.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

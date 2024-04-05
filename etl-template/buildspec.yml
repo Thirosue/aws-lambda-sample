@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - pip install poetry
+      - poetry install
+
+  pre_build:
+    commands:
+      - poetry run pytest
+
+  build:
+    commands:
+      # requirements.txt is needed for AWS Lambda
+      - poetry export -f requirements.txt --output lambda_handler/requirements.txt
+      - sam build
+
+  post_build:
+    commands:
+      - sam deploy --config-file samconfig-${Env}.toml --no-confirm-changeset --no-fail-on-empty-changeset

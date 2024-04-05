@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CodePipeline for automatically deploying SAM application
+
+Parameters:
+  Env:
+    AllowedValues:
+      - dev
+      - stg
+      - prod
+    Default: dev
+    Description: input your Profile.
+    Type: String
+  ArtifactStoreS3Bucket:
+    Type: String
+    Default: etl-template-artifacts-dev-20240403
+    Description: The name of the S3 bucket to store pipeline artifacts
+  CodeCommitRepositoryName:
+    Type: String
+    Default: etl-template
+    Description: The name of the CodeCommit repository
+  BranchName:
+    Type: String
+    Default: main
+    Description: The name of the branch
+  ProjectName:
+    Type: String
+    Default: etl-template
+    Description: The name of the CodeBuild project
+  CodeBuildRoleArn:
+    Type: String
+    Description: The ARN of the CodeBuild role
+  CodePipelineRoleArn:
+    Type: String
+    Description: The ARN of the CodePipeline role
+
+Resources:
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${ProjectName}-build-${Env}
+      ServiceRole: !Ref CodeBuildRoleArn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0
+        EnvironmentVariables:
+          - Name: Env
+            Value: !Ref Env
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: buildspec.yml
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !Ref CodePipelineRoleArn
+      PipelineType: V2
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactStoreS3Bucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeCommit
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                RepositoryName: !Ref CodeCommitRepositoryName
+                BranchName: !Ref BranchName
+                PollForSourceChanges: true
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: BuildAction
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              RunOrder: 1
