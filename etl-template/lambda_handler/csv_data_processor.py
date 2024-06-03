@@ -11,7 +11,7 @@ class CSVDataProcessor(DataProcessorBase, Generic[In, Out]):
             Bucket=self.source_bucket, Key=self.source_key
         )
         csv_data = response["Body"].read().decode("utf-8")
-        df = pd.read_csv(StringIO(csv_data))
+        df = pd.read_csv(StringIO(csv_data), keep_default_na=False)
 
         return df.to_dict(orient="records")
 
