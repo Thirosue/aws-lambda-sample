@@ -8,12 +8,12 @@ dest_bucket = os.environ["S3_DESTINATION_BUCKET"]
 
 
 class SampleProcessor(CSVDataProcessor[InputSchema, OutPutSchema]):
-    def process_data(self, csv_data: List[Dict]) -> List[OutPutSchema]:
+    def process_data(self, csv_data: List[InputSchema]) -> List[OutPutSchema]:
         return [
             OutPutSchema(
                 name=f"{item.first_name} {item.last_name}", is_deleted=item.deleted
             )  # create output schema edit here
-            for item in (InputSchema(**row) for row in csv_data)
+            for item in csv_data
             if not item.deleted  # filter out deleted items
         ]
 
@@ -22,7 +22,7 @@ def lambda_handler(event, context):
     src_bucket = event["Records"][0]["s3"]["bucket"]["name"]
     src_key = event["Records"][0]["s3"]["object"]["key"]
 
-    processor = SampleProcessor(src_bucket, src_key, dest_bucket)
+    processor = SampleProcessor(src_bucket, src_key, dest_bucket, model=InputSchema)
     processor.process()
 
     return {"statusCode": 200, "body": "Process completed."}

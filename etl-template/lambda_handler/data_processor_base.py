@@ -22,7 +22,7 @@ class DataProcessorBase(ABC, Generic[In, Out]):
         self.save_data(processed_data)
 
     @abstractmethod
-    def load_data(self) -> List[Dict]:
+    def load_data(self) -> List[In]:
         pass
 
     @abstractmethod

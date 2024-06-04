@@ -1,12 +1,16 @@
 import pytest
+from datetime import datetime
 
-from lambda_handler.lambda_handler import OutPutSchema, SampleProcessor
+from lambda_handler.lambda_handler import InputSchema, OutPutSchema, SampleProcessor
 
 
 @pytest.fixture(scope="function")
 def test_processor():
     processor = SampleProcessor(
-        source_bucket="mybucket", source_key="test.csv", dest_bucket="destbucket"
+        source_bucket="mybucket",
+        source_key="test.csv",
+        model=InputSchema,
+        dest_bucket="destbucket",
     )
     return processor
 
@@ -14,9 +18,15 @@ def test_processor():
 def test_process_data(test_processor):
     response = test_processor.process_data(
         [
-            {"first_name": "John", "last_name": "Doe", "deleted": 0},
-            {"first_name": "Jane", "last_name": "Doe", "deleted": 1},
-            {"first_name": "John", "last_name": "Does", "deleted": 0},
+            InputSchema(
+                first_name="John", last_name="Doe", timestamp=datetime.now(), deleted=0
+            ),
+            InputSchema(
+                first_name="Jane", last_name="Doe", timestamp=datetime.now(), deleted=1
+            ),
+            InputSchema(
+                first_name="John", last_name="Does", timestamp=datetime.now(), deleted=0
+            ),
         ]
     )
     assert response == [

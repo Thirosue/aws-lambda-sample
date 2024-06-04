@@ -1,9 +1,12 @@
+from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel, field_validator
 
 
 class InputSchema(BaseModel):
     first_name: str
     last_name: str
+    timestamp: Optional[datetime]
     deleted: int
 
     @field_validator("deleted")

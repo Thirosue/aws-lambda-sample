@@ -1,10 +1,9 @@
-from io import StringIO
-
 import boto3
-import pandas as pd
 import pytest
+from datetime import datetime
 from moto import mock_aws
 from pydantic import BaseModel
+from typing import Optional
 
 from lambda_handler.csv_data_processor import CSVDataProcessor
 
@@ -16,7 +15,9 @@ class TestProcessor(CSVDataProcessor):
 
 class TestSchema(BaseModel):
     col1: str
-    col2: str
+    col2: Optional[str]
+    col3: int
+    col4: Optional[datetime]
 
 
 @pytest.fixture(scope="function")
@@ -31,7 +32,10 @@ def mock_s3():
 @pytest.fixture(scope="function")
 def test_processor():
     processor = TestProcessor(
-        source_bucket="mybucket", source_key="test.csv", dest_bucket="destbucket"
+        source_bucket="mybucket",
+        source_key="test.csv",
+        model=TestSchema,
+        dest_bucket="destbucket",
     )
     return processor
 
@@ -39,19 +43,19 @@ def test_processor():
 @mock_aws
 def test_load_data(mock_s3, test_processor):
     conn = boto3.resource("s3", region_name="us-east-1")
-    conn.Object("mybucket", "test.csv").put(Body="col1,col2\nval1,val2")
+    conn.Object("mybucket", "test.csv").put(Body="col1,col2,col3,col4\nval1,,1,\n")
 
     response = test_processor.load_data()
 
-    assert response == [{"col1": "val1", "col2": "val2"}]
+    assert response == [TestSchema(col1="val1", col2="", col3=1, col4=None)]
 
 
 @mock_aws
 def test_save_data(mock_s3, test_processor):
     conn = boto3.resource("s3", region_name="us-east-1")
 
-    data = [TestSchema(col1="val1", col2="val2")]
+    data = [TestSchema(col1="val1", col2="", col3=1, col4=None)]
     test_processor.save_data(data)
 
     obj = conn.Object("destbucket", "test.csv").get()
-    assert obj["Body"].read().decode("utf-8") == "col1,col2\nval1,val2\n"
+    assert obj["Body"].read().decode("utf-8") == "col1,col2,col3,col4\nval1,,1,\n"
