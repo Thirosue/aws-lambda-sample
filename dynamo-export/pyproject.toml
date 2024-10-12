@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "dynamoexport"
+version = "0.1.0"
+description = ""
+authors = ["takeshi.hirosue <takeshi.hirosue@bigtreetc.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pandas = "^2.2.3"
+pydantic = "^2.9.2"
+boto3 = "^1.35.39"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.3"
+faker = "^30.3.0"
+moto = {extras = ["dynamodb", "s3"], version = "^5.0.16"}
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^4.0.1"
+black = "^24.10.0"
+isort = "^5.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

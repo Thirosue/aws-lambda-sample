@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  etltemplate
+
+  Sample SAM Template for etltemplate
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Lambda Settings
+        Parameters:
+          - Env
+          - FunctionName
+
+Parameters:
+  Env:
+    AllowedValues:
+      - dev
+      - stg
+      - prod
+    Default: dev
+    Description: input your Profile.
+    Type: String
+
+  FunctionName:
+    Default: etl-template
+    Description: input your FunctionName.
+    Type: String
+
+  MemorySize:
+    AllowedValues:
+      - 128
+      - 256
+      - 512
+      - 1024
+    Default: 256
+    Description: input your MemorySize.
+    Type: Number
+
+Resources:
+  LambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+      Path: /
+      RoleName:
+        Fn::Sub: ${FunctionName}Role-${Env}
+    Type: AWS::IAM::Role
+
+  LambdaFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: lambda_handler/
+      Handler: lambda_handler.lambda_handler
+      Runtime: python3.12
+      FunctionName: !Sub ${FunctionName}-${Env}
+      Description: !Sub ${FunctionName}(${Env})
+      Role: !GetAtt LambdaExecutionRole.Arn
+      MemorySize: !Ref MemorySize
+      Architectures:
+        - x86_64
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref S3Bucket
+            Events: s3:ObjectCreated:Put
+      Environment:
+        Variables:
+          ENV: !Ref Env
+          S3_DESTINATION_BUCKET: !Ref S3DestinationBucket
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+
+  S3DestinationBucket:
+    Type: AWS::S3::Bucket
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  S3Bucket:
+    Description: "S3 Bucket ARN"
+    Value: !GetAtt S3Bucket.Arn
+  S3DestinationBucket:
+    Description: "S3 Destination Bucket ARN"
+    Value: !GetAtt S3DestinationBucket.Arn
+  LambdaFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt LambdaFunction.Arn
+  LambdaFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt LambdaExecutionRole.Arn
