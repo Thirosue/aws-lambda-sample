@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "sftp-transfer"
+version = "0.1.0"
+description = ""
+authors = ["takeshi.hirosue <takeshi.hirosue@bigtreetc.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+pydantic = "^2.10.6"
+paramiko = "^3.5.1"
+boto3 = "^1.36.16"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.4"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.8.0"
+black = "^24.10.0"
+isort = "^5.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

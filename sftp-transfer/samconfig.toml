@@ -1,0 +1,36 @@
+# More information about the configuration file can be found here:
+# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-config.html
+version = 0.1
+
+[default.global.parameters]
+stack_name = "sftp-transfer"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_NAMED_IAM"
+confirm_changeset = true
+resolve_s3 = true
+s3_prefix = "sftp-transfer"
+region = "ap-northeast-1"
+profile = "arc"
+disable_rollback = true
+parameter_overrides = "FunctionName=\"sftp-transfer\" Env=\"dev\" MemorySize=\"128\" EfsLambdaSecurityGroup=\"sg-f2347096\" EfsLambdaSubnetA=\"subnet-ed7676b4\" EfsLambdaSubnetB=\"subnet-04a19d80ac571c21e\""
+image_repositories = []
+
+[default.package.parameters]
+resolve_s3 = true
+
+[default.sync.parameters]
+watch = true
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+
+[default.local_start_lambda.parameters]
+warm_containers = "EAGER"

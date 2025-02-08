@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sftp-transfer
+
+  Sample SAM Template for sftp-transfer
+
+Globals:
+  Function:
+    Timeout: 30
+
+    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    # LoggingConfig:
+    #   LogFormat: JSON
+
+Metadata:
+  Project: MyTransferLambda
+  BuildMethod: makefile
+  Maintainer: your-email@example.com
+
+Parameters:
+  FunctionName:
+    Default: sftp-transfer
+    Description: input your FunctionName.
+    Type: String
+  Env:
+    AllowedValues:
+      - dev
+      - stg
+      - prod
+    Default: dev
+    Type: String
+    Description: "環境 (例: dev, prod)"
+  MemorySize:
+    Type: Number
+    Default: 128
+    Description: "Lambda 関数のメモリサイズ（MB）"
+  EfsLambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: "Lambda 用のセキュリティグループID"
+    Default: sg-f2347096
+  EfsLambdaSubnetA:
+    Type: AWS::EC2::Subnet::Id
+    Description: "Lambda 用のサブネット1のID"
+    Default: subnet-ed7676b4
+  EfsLambdaSubnetB:
+    Type: AWS::EC2::Subnet::Id
+    Description: "Lambda 用のサブネット2のID"
+    Default: subnet-04a19d80ac571c21e
+
+Resources:
+  LambdaExecutionRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Path: /
+      RoleName:
+        Fn::Sub: ${FunctionName}Role-${Env}
+    Type: AWS::IAM::Role
+
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+      - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn
+      MemorySize: !Ref MemorySize
+      # VpcConfig:
+      #   SecurityGroupIds:
+      #   - !Ref EfsLambdaSecurityGroup
+      #   SubnetIds:
+      #   - !Ref EfsLambdaSubnetA
+      #   - !Ref EfsLambdaSubnetB
