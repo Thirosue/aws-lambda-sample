@@ -9,7 +9,7 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "mime-types": "^2.1.11",
     "node-zip": "^1.1.1",
     "zip": "^1.2.0"
